@@ -9,6 +9,12 @@ class ClickEvolution {
         this.developerMode = false;
         this.certificateUnlocked = false;
         
+        // Performance optimization
+        this.activeParticles = [];
+        this.maxParticles = 200; // Limit total particles
+        this.lastClickTime = 0;
+        this.clickThrottle = 50; // Minimum ms between effect processing
+        
         // DOM elements
         this.elements = {
             totalClicks: document.getElementById('totalClicks'),
@@ -143,6 +149,9 @@ class ClickEvolution {
         // Check for random achievements
         setInterval(() => this.checkRandomAchievements(), 5000);
         
+        // Performance cleanup - remove old particles every 2 seconds
+        setInterval(() => this.cleanupParticles(), 2000);
+        
         // Add developer mode toggle (Ctrl + Shift + D)
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key === 'D') {
@@ -152,6 +161,30 @@ class ClickEvolution {
         
         // Create developer panel
         this.createDeveloperPanel();
+    }
+    
+    cleanupParticles() {
+        // Remove particles that are no longer animating or have been around too long
+        const now = Date.now();
+        this.activeParticles = this.activeParticles.filter(particle => {
+            if (now - particle.createdAt > 5000 || !document.body.contains(particle.element)) {
+                if (particle.element && particle.element.parentNode) {
+                    particle.element.remove();
+                }
+                return false;
+            }
+            return true;
+        });
+        
+        // If we still have too many particles, remove the oldest ones
+        if (this.activeParticles.length > this.maxParticles) {
+            const toRemove = this.activeParticles.splice(0, this.activeParticles.length - this.maxParticles);
+            toRemove.forEach(particle => {
+                if (particle.element && particle.element.parentNode) {
+                    particle.element.remove();
+                }
+            });
+        }
     }
     
     handleClick() {
@@ -164,9 +197,15 @@ class ClickEvolution {
         
         this.updateDisplay();
         this.checkModeProgression();
-        this.createClickEffects();
+        
+        // Throttle effects to prevent performance issues
+        if (now - this.lastClickTime > this.clickThrottle) {
+            this.createClickEffects();
+            this.applyDramaticEffects();
+            this.lastClickTime = now;
+        }
+        
         this.animateCounter();
-        this.applyDramaticEffects();
     }
     
     updateDisplay() {
@@ -300,8 +339,8 @@ class ClickEvolution {
         const currentModeData = this.getCurrentModeData();
         const effects = currentModeData.effects;
         
-        // Screen shake effect
-        if (effects.screenShake) {
+        // Limit screen shake to prevent accumulation
+        if (effects.screenShake && !document.body.classList.contains('screen-shake')) {
             document.body.classList.add('screen-shake');
             setTimeout(() => document.body.classList.remove('screen-shake'), 200);
         }
@@ -314,7 +353,7 @@ class ClickEvolution {
             }, 300);
         }
         
-        // Button rotation effect
+        // Button rotation effect (optimized)
         if (effects.rotation) {
             this.elements.clickButton.style.transform += ' rotate(15deg)';
             setTimeout(() => {
@@ -322,73 +361,104 @@ class ClickEvolution {
             }, 200);
         }
         
-        // Advanced mode effects
-        if (this.currentMode >= 5) {
+        // Advanced mode effects (throttled)
+        if (this.currentMode >= 5 && Math.random() < 0.3) { // 30% chance to reduce frequency
             this.createDivineRays();
         }
         
-        if (this.currentMode >= 7) {
+        if (this.currentMode >= 7 && Math.random() < 0.2) { // 20% chance to reduce frequency
             this.createDimensionalRift();
         }
         
-        if (this.currentMode >= 9) {
+        if (this.currentMode >= 9 && Math.random() < 0.1) { // 10% chance to reduce frequency
             this.createRealityGlitch();
         }
     }
     
     createDivineRays() {
-        for (let i = 0; i < 8; i++) {
+        // Limit to 4 rays instead of 8 for better performance
+        for (let i = 0; i < 4; i++) {
             const ray = document.createElement('div');
-            ray.style.position = 'absolute';
-            ray.style.width = '3px';
-            ray.style.height = '100px';
-            ray.style.background = 'linear-gradient(transparent, #FFD700, transparent)';
-            ray.style.left = '50%';
-            ray.style.top = '50%';
-            ray.style.transform = `translate(-50%, -50%) rotate(${i * 45}deg)`;
-            ray.style.opacity = '0.8';
-            ray.style.animation = 'fadeOut 1s ease-out forwards';
+            ray.style.cssText = `
+                position: fixed;
+                width: 2px;
+                height: 80px;
+                background: linear-gradient(transparent, #FFD700, transparent);
+                pointer-events: none;
+                opacity: 0.6;
+                animation: fadeOut 0.8s ease-out forwards;
+                z-index: 50;
+            `;
             
             const buttonRect = this.elements.clickButton.getBoundingClientRect();
-            ray.style.position = 'fixed';
             ray.style.left = buttonRect.left + buttonRect.width / 2 + 'px';
             ray.style.top = buttonRect.top + buttonRect.height / 2 + 'px';
+            ray.style.transform = `translate(-50%, -50%) rotate(${i * 90}deg)`;
             
             this.elements.effectsContainer.appendChild(ray);
-            setTimeout(() => ray.remove(), 1000);
+            this.activeParticles.push({
+                element: ray,
+                createdAt: Date.now()
+            });
+            
+            setTimeout(() => {
+                if (ray.parentNode) ray.remove();
+            }, 800);
         }
     }
     
     createDimensionalRift() {
+        // Create a single, efficient rift
         const rift = document.createElement('div');
-        rift.style.position = 'fixed';
-        rift.style.left = '50%';
-        rift.style.top = '50%';
-        rift.style.width = '2px';
-        rift.style.height = '100vh';
-        rift.style.background = 'linear-gradient(#FF00FF, #00FFFF, #FF00FF)';
-        rift.style.transform = 'translate(-50%, -50%) rotate(' + Math.random() * 360 + 'deg)';
-        rift.style.opacity = '0.6';
-        rift.style.animation = 'dimensionalPulse 0.5s ease-out forwards';
+        rift.style.cssText = `
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 1px;
+            height: 60vh;
+            background: linear-gradient(#FF00FF, #00FFFF);
+            transform: translate(-50%, -50%) rotate(${Math.random() * 360}deg);
+            opacity: 0.4;
+            animation: dimensionalPulse 0.4s ease-out forwards;
+            pointer-events: none;
+            z-index: 40;
+        `;
         
         this.elements.effectsContainer.appendChild(rift);
-        setTimeout(() => rift.remove(), 500);
+        this.activeParticles.push({
+            element: rift,
+            createdAt: Date.now()
+        });
+        
+        setTimeout(() => {
+            if (rift.parentNode) rift.remove();
+        }, 400);
     }
     
     createRealityGlitch() {
-        // Screen distortion effect
+        // Lightweight glitch effect
         const glitch = document.createElement('div');
-        glitch.style.position = 'fixed';
-        glitch.style.top = '0';
-        glitch.style.left = '0';
-        glitch.style.width = '100%';
-        glitch.style.height = '100%';
-        glitch.style.background = 'repeating-linear-gradient(90deg, transparent, rgba(255,0,0,0.1) 2px, transparent 4px)';
-        glitch.style.animation = 'glitchEffect 0.2s ease-out forwards';
-        glitch.style.pointerEvents = 'none';
+        glitch.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(90deg, transparent, rgba(255,0,0,0.05) 2px, transparent 4px);
+            animation: glitchEffect 0.15s ease-out forwards;
+            pointer-events: none;
+            z-index: 30;
+        `;
         
         this.elements.effectsContainer.appendChild(glitch);
-        setTimeout(() => glitch.remove(), 200);
+        this.activeParticles.push({
+            element: glitch,
+            createdAt: Date.now()
+        });
+        
+        setTimeout(() => {
+            if (glitch.parentNode) glitch.remove();
+        }, 150);
     }
     
     showCertificateGenerator() {
@@ -670,6 +740,16 @@ class ClickEvolution {
             this.achievements = [];
             this.certificateUnlocked = false;
             this.startTime = Date.now();
+            this.lastClickTime = 0;
+            
+            // Clear all particles and effects
+            this.activeParticles.forEach(particle => {
+                if (particle.element && particle.element.parentNode) {
+                    particle.element.remove();
+                }
+            });
+            this.activeParticles = [];
+            this.elements.effectsContainer.innerHTML = '';
             
             // Reset UI
             document.body.className = '';
@@ -710,30 +790,46 @@ class ClickEvolution {
         const currentModeData = this.getCurrentModeData();
         const effects = currentModeData.effects;
         
-        // Create sparkles
-        this.createSparkles(effects.sparkles);
+        // Limit particles based on performance
+        const maxSparkles = Math.min(effects.sparkles, 15);
+        const maxConfetti = Math.min(effects.confetti, 8);
         
-        // Create confetti
-        if (effects.confetti > 0) {
-            this.createConfetti(effects.confetti);
+        // Create sparkles (optimized)
+        this.createSparkles(maxSparkles);
+        
+        // Create confetti (optimized)
+        if (maxConfetti > 0) {
+            this.createConfetti(maxConfetti);
         }
     }
     
     createSparkles(count) {
+        const buttonRect = this.elements.clickButton.getBoundingClientRect();
+        
         for (let i = 0; i < count; i++) {
+            // Check particle limit
+            if (this.activeParticles.length >= this.maxParticles) break;
+            
             const sparkle = document.createElement('div');
             sparkle.className = 'particle sparkle';
             
-            const buttonRect = this.elements.clickButton.getBoundingClientRect();
-            const x = buttonRect.left + buttonRect.width / 2 + (Math.random() - 0.5) * buttonRect.width;
-            const y = buttonRect.top + buttonRect.height / 2 + (Math.random() - 0.5) * buttonRect.height;
+            const x = buttonRect.left + buttonRect.width / 2 + (Math.random() - 0.5) * buttonRect.width * 0.8;
+            const y = buttonRect.top + buttonRect.height / 2 + (Math.random() - 0.5) * buttonRect.height * 0.8;
             
             sparkle.style.left = x + 'px';
             sparkle.style.top = y + 'px';
             
             this.elements.effectsContainer.appendChild(sparkle);
             
-            setTimeout(() => sparkle.remove(), 2000);
+            // Track particle for cleanup
+            this.activeParticles.push({
+                element: sparkle,
+                createdAt: Date.now()
+            });
+            
+            setTimeout(() => {
+                if (sparkle.parentNode) sparkle.remove();
+            }, 2000);
         }
     }
     
@@ -741,6 +837,9 @@ class ClickEvolution {
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffd93d', '#6c5ce7'];
         
         for (let i = 0; i < count; i++) {
+            // Check particle limit
+            if (this.activeParticles.length >= this.maxParticles) break;
+            
             const confetti = document.createElement('div');
             confetti.className = 'particle confetti';
             confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
@@ -749,45 +848,66 @@ class ClickEvolution {
             
             this.elements.effectsContainer.appendChild(confetti);
             
-            setTimeout(() => confetti.remove(), 3000);
+            // Track particle for cleanup
+            this.activeParticles.push({
+                element: confetti,
+                createdAt: Date.now()
+            });
+            
+            setTimeout(() => {
+                if (confetti.parentNode) confetti.remove();
+            }, 3000);
         }
     }
     
     createCelebrationEffects() {
-        // Massive confetti explosion
-        this.createConfetti(50);
-        this.createSparkles(100);
+        // Limited celebration effects to prevent lag
+        this.createConfetti(20);
+        this.createSparkles(30);
         
-        // Rainbow effect for high modes
+        // Rainbow effect for high modes (optimized)
         if (this.currentMode >= 4) {
-            this.createRainbowExplosion();
+            this.createOptimizedRainbowExplosion();
         }
     }
     
-    createRainbowExplosion() {
-        const colors = ['#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ff00', '#00ff80', '#00ffff', '#0080ff', '#0000ff', '#8000ff', '#ff00ff', '#ff0080'];
+    createOptimizedRainbowExplosion() {
+        const colors = ['#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ff00', '#00ff80', '#00ffff', '#0080ff'];
         
-        for (let i = 0; i < 30; i++) {
+        // Reduced from 30 to 12 particles for better performance
+        for (let i = 0; i < 12; i++) {
+            if (this.activeParticles.length >= this.maxParticles) break;
+            
             const explosion = document.createElement('div');
             explosion.className = 'particle sparkle';
-            explosion.style.background = colors[Math.floor(Math.random() * colors.length)];
-            explosion.style.width = '10px';
-            explosion.style.height = '10px';
+            explosion.style.background = colors[i % colors.length];
+            explosion.style.width = '8px';
+            explosion.style.height = '8px';
             
-            explosion.style.left = window.innerWidth / 2 + 'px';
-            explosion.style.top = window.innerHeight / 2 + 'px';
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            explosion.style.left = centerX + 'px';
+            explosion.style.top = centerY + 'px';
             
-            const angle = (i / 30) * 2 * Math.PI;
-            const distance = 200 + Math.random() * 200;
+            const angle = (i / 12) * 2 * Math.PI;
+            const distance = 150;
             const x = Math.cos(angle) * distance;
             const y = Math.sin(angle) * distance;
             
-            explosion.style.setProperty('--end-x', x + 'px');
-            explosion.style.setProperty('--end-y', y + 'px');
+            explosion.style.transform = `translate(${x}px, ${y}px)`;
+            explosion.style.transition = 'all 1s ease-out';
+            explosion.style.opacity = '0';
             
             this.elements.effectsContainer.appendChild(explosion);
             
-            setTimeout(() => explosion.remove(), 2000);
+            this.activeParticles.push({
+                element: explosion,
+                createdAt: Date.now()
+            });
+            
+            setTimeout(() => {
+                if (explosion.parentNode) explosion.remove();
+            }, 1000);
         }
     }
     
