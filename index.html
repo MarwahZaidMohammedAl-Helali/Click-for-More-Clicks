@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Evolution - Progressive Clicker Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <!-- Header Section -->
+        <header class="game-header">
+            <h1 class="game-title">CLICK EVOLUTION</h1>
+            <div class="mode-indicator" id="modeIndicator">
+                <span class="mode-name" id="modeName">NORMAL MODE</span>
+                <span class="mode-description" id="modeDescription">Basic clicking experience</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.9rem; color: #B0B0B0;">
+                Press <kbd>Ctrl + Shift + D</kbd> for Developer Tools
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="game-main">
+            <!-- Left Panel - Stats -->
+            <aside class="stats-panel">
+                <h3>📊 Statistics</h3>
+                <div class="stat-group">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Clicks:</span>
+                        <span class="stat-value" id="totalClicks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Clicks/Second:</span>
+                        <span class="stat-value" id="clicksPerSecond">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Play Time:</span>
+                        <span class="stat-value" id="playTime">0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Current Mode:</span>
+                        <span class="stat-value" id="currentMode">1</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Panel - Game Area -->
+            <section class="game-center">
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <span class="progress-label">Next Mode Progress</span>
+                        <span class="progress-numbers" id="progressNumbers">0 / 100</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="click-area">
+                    <div class="click-counter" id="clickCounter">0</div>
+                    <button class="click-button" id="clickButton">
+                        <span class="button-text">CLICK</span>
+                    </button>
+                    <div class="goal-text" id="goalText">Click 100 times to unlock Epic Mode!</div>
+                </div>
+
+                <div class="milestone-section">
+                    <div class="milestone-message" id="milestoneMessage">
+                        Welcome to Click Evolution! Start clicking to progress through dramatic modes!
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Achievements -->
+            <aside class="achievements-panel">
+                <h3>🏆 Recent Achievements</h3>
+                <div class="achievements-list" id="achievementsList">
+                    <div class="no-achievements">Start clicking to earn achievements!</div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="game-footer" id="gameFooter" style="display: none;">
+            <div class="share-section">
+                <h4>Share Your Progress:</h4>
+                <div class="share-buttons">
+                    <a href="#" class="share-btn share-twitter" id="shareTwitter">Twitter</a>
+                    <a href="#" class="share-btn share-facebook" id="shareFacebook">Facebook</a>
+                    <a href="#" class="share-btn share-reddit" id="shareReddit">Reddit</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Effects Container -->
+    <div class="effects-container" id="effectsContainer"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
